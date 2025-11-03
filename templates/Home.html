@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+{% block title %}Home{% endblock %}
+
+{% block content %}
+<div class="text-center mb-5">
+  <h1 class="fw-bold" style="color:#4b392b;">Welcome to SecureGallery! 🎉</h1>
+  <p class="lead text-muted">Keep your photos safe, and share them securely with anyone you want.</p>
+  <img src="{{ url_for('static', filename='images/SecureGallery Logo.png') }}" alt="Secure Gallery" class="img-fluid my-4" style="max-height:200px;">
+</div>
+
+<div class="row text-center">
+  <div class="col-md-6 mb-4">
+    <div class="card shadow-sm h-100">
+      <div class="card-body d-flex flex-column justify-content-center">
+   <img src="{{ url_for('static', filename='images/Upload.png') }}"
+     alt="Secure Gallery"
+     class="img-fluid my-4 mx-auto d-block"
+     style="height:80px; width:70px;">
+          <h4 class="card-title">Upload a Secure Photo</h4>
+        <p class="card-text text-muted">Upload your photos and encrypt them to keep them protected.</p>
+        <a href="{{ url_for('upload') }}" class="btn btn-primary mt-auto">Go to Upload</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-6 mb-4">
+    <div class="card shadow-sm h-100">
+      <div class="card-body d-flex flex-column justify-content-center">
+          <img src="{{ url_for('static', filename='images/Gallery.png') }}"
+     alt="Secure Gallery"
+     class="img-fluid my-4 mx-auto d-block"
+     style="height:80px; width:85px;">
+        <h4 class="card-title">Your Gallery</h4>
+        <p class="card-text text-muted">Browse all your secured photos here, and download or share them safely.</p>
+        <a href="{{ url_for('gallery') }}" class="btn btn-primary mt-auto">Go to Gallery</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<hr class="my-5">
+
+<div class="text-center mb-4">
+  <h3 style="color:#4b392b;">Why Choose SecureGallery?</h3>
+  <p class="text-muted">We provide strong protection for your personal photos using modern encryption techniques, with an easy-to-use and smooth experience.</p>
+</div>
+
+<div class="row text-center">
+  <div class="col-md-3 mb-4">
+    <div class="card border-0 shadow-sm h-100 p-3">
+      <div class="card-body">
+        <div class="mb-2" style="font-size:2rem;">🔒</div>
+        <h5 class="card-title fw-bold">Strong Encryption</h5>
+        <p class="card-text text-muted">Your photos are securely encrypted so only you can access them.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-3 mb-4">
+    <div class="card border-0 shadow-sm h-100 p-3">
+      <div class="card-body">
+        <div class="mb-2" style="font-size:2rem;">💾</div>
+        <h5 class="card-title fw-bold">Secure Storage</h5>
+        <p class="card-text text-muted">Access your photos anytime while keeping them safe from unauthorized access.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-3 mb-4">
+    <div class="card border-0 shadow-sm h-100 p-3">
+      <div class="card-body">
+        <div class="mb-2" style="font-size:2rem;">📂</div>
+        <h5 class="card-title fw-bold">Organized Gallery</h5>
+        <p class="card-text text-muted">All your photos neatly arranged, easy to browse, download, or share.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-3 mb-4">
+    <div class="card border-0 shadow-sm h-100 p-3">
+      <div class="card-body">
+        <div class="mb-2" style="font-size:2rem;">🚀</div>
+        <h5 class="card-title fw-bold">Fast & Smooth</h5>
+        <p class="card-text text-muted">Enjoy a seamless experience with a clean and responsive interface.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
