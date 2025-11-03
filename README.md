@@ -19,17 +19,12 @@ The main goal of this project is to develop a **secure photo gallery system** th
 
 ## Key Features
 
-- User Interface
-Simple and modern design, Easy navigation between **Login**, **Register**, **Upload**, and **Gallery** windows.  
+- User Interface : Simple and modern design, Easy navigation between **Login**, **Register**, **Upload**, and **Gallery** windows.  
 
-- User Authentication
-Secure login and registration system with password validation, Prevents unauthorized access to encrypted photos.  
+- User Authentication : Secure login and registration system with password validation, Prevents unauthorized access to encrypted photos.  
 
-- Photo Upload & Storage
-Users can upload images from their local device, Each uploaded image is automatically **encrypted using AES** before being stored locally.  
+- Photo Upload & Storage : Users can upload images from their local device, Each uploaded image is automatically **encrypted using AES** before being stored locally.  
 
-- AES Encryption & Decryption
-**AES (Advanced Encryption Standard)** is implemented to protect image files, Only authenticated users can decrypt and view their photos.  
+- AES Encryption & Decryption : **AES (Advanced Encryption Standard)** is implemented to protect image files, Only authenticated users can decrypt and view their photos.  
 
-- Secure Retrieval
-Decrypted images are displayed **temporarily** during the active session, All images remain encrypted in storage to ensure privacy.  
+- Secure Retrieval : Decrypted images are displayed **temporarily** during the active session, All images remain encrypted in storage to ensure privacy.  
