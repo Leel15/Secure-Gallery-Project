@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}Upload Photo{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-7">
+    <div class="card p-4 shadow-sm">
+
+      <div class="text-center mb-4">
+        <img src="{{ url_for('static', filename='images/Upload.png') }}"
+             alt="Upload Illustration"
+             class="img-fluid"
+             style="height:80px; width:70px;">
+      </div>
+
+      <h4 class="mb-3 text-center">Upload a Secure Photo</h4>
+      <p class="text-muted text-center mb-4">Upload your photos and encrypt them to keep them protected.</p>
+
+      <form method="post" action="{{ url_for('upload') }}" enctype="multipart/form-data">
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Select Image File</label>
+          <input type="file" class="form-control" name="photo" accept="image/*" required>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Enter Password for Encryption (Optional)</label>
+          <input type="password" class="form-control" name="password_for_encryption" placeholder="Leave empty to use master key">
+          <div class="form-text">If left empty, your session's master key will be used.</div>
+        </div>
+
+        <button class="btn btn-primary w-100">Upload & Encrypt</button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
