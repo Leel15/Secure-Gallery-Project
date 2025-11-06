@@ -12,7 +12,6 @@ fake_user = {
     "password": "1234"
 }
 
-@app.route('/')
 @app.route('/home')
 def home():
     if not session.get('user_id'):
@@ -20,7 +19,7 @@ def home():
         return redirect(url_for('login'))
     return render_template('home.html')
 
-
+@app.route('/')
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
@@ -123,3 +122,4 @@ def delete_photo(filename):
     return redirect(url_for('gallery'))
 if __name__ == '__main__':
     app.run(debug=True)
+
