@@ -1,5 +1,5 @@
 from flask import Flask, render_template, request, redirect, url_for , flash , session
-from database import init_db, register_user, verify_user
+from database import init_db, register_user, verify_user, create_reset_token, verify_reset_token, reset_password
 
 
 import os
@@ -128,5 +128,17 @@ def delete_photo(filename):
         flash(f'An error occurred while deleting the photo: {str(e)}', 'danger')
 
     return redirect(url_for('gallery'))
+
+@app.route("/forgot", methods=["GET", "POST"])
+def forgot_password():
+    if request.method == "POST":
+        username = request.form["username"]
+        token = create_reset_token(username)
+        if token:
+            reset_link = url_for("reset_password_page", token=token, _external=True)
+            flash(f"Password reset link: {reset_link}", "info")
+        else:
+            flash("Username not found.", "danger")
+    return render_template("forgot.html")
 if __name__ == '__main__':
     app.run(debug=True)
