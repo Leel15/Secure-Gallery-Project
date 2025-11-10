@@ -1,7 +1,12 @@
 from flask import Flask, render_template, request, redirect, url_for , flash , session
+from database import init_db, register_user, verify_user
+
+
 import os
 
 app = Flask(__name__)
+init_db()
+
 app.secret_key = "secret-key"
 UPLOAD_FOLDER = 'static/uploads'
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
@@ -26,7 +31,7 @@ def login():
         username = request.form['username']
         password = request.form['password']
 
-        if username == fake_user['username'] and password == fake_user['password']:
+        if verify_user(username, password):
             session['user_id'] = username
             return redirect(url_for('home'))
         else:
@@ -55,8 +60,11 @@ def register():
         if password != confirm_password:
             message = "Passwords do not match!"
         else:
-            message = "Registration successful!"
-            success = True
+            if register_user(username, email, password):
+                message = "Registration successful!"
+                success = True
+            else:
+                message = "Username already exists!"
 
     return render_template('register.html', message=message, success=success)
 
@@ -122,4 +130,3 @@ def delete_photo(filename):
     return redirect(url_for('gallery'))
 if __name__ == '__main__':
     app.run(debug=True)
-
