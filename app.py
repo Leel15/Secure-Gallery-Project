@@ -108,8 +108,13 @@ def reset_password(token):
         if password != confirm_password:
             message = "Passwords do not match!"
         else:
-            message = "Password reset successful!"
-            success = True
+            from database import reset_password as db_reset_password
+
+            if db_reset_password(token, password):
+                message = "Password reset successful!"
+                success = True
+            else:
+                message = "Invalid or expired token."
 
     return render_template('reset_password.html', token=token, message=message, success=success)
 
@@ -129,16 +134,17 @@ def delete_photo(filename):
 
     return redirect(url_for('gallery'))
 
-@app.route("/forgot", methods=["GET", "POST"])
+@app.route("/forgot_password", methods=["GET", "POST"])
 def forgot_password():
     if request.method == "POST":
         username = request.form["username"]
         token = create_reset_token(username)
         if token:
-            reset_link = url_for("reset_password_page", token=token, _external=True)
-            flash(f"Password reset link: {reset_link}", "info")
+            return redirect(url_for("reset_password", token=token))
         else:
             flash("Username not found.", "danger")
-    return render_template("forgot.html")
+    return render_template("forgot_password.html")
+
 if __name__ == '__main__':
     app.run(debug=True)
+
