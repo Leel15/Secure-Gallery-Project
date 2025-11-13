@@ -1,5 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for , flash , session
 from database import init_db, register_user, verify_user, create_reset_token, verify_reset_token, reset_password
+from encryption import encrypt_image, decrypt_image
+import base64
 
 
 import os
