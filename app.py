@@ -108,8 +108,34 @@ def gallery():
     if not session.get('user_id'):
         flash("Please login to access the gallery.", "warning")
         return redirect(url_for('login'))
-    photos = os.listdir(app.config['UPLOAD_FOLDER'])
-    return render_template('gallery.html', photos=photos)
+    photo_files = []
+    for filename in os.listdir(app.config['UPLOAD_FOLDER']):
+        if filename.endswith('.enc'):
+            path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            iv_path = path.replace('.enc', '.iv')
+
+            # قراءة الملف المشفر والـ iv
+            with open(path, 'rb') as f:
+                encrypted_bytes = f.read()
+            with open(iv_path, 'rb') as f:
+                iv = f.read()
+
+            # فك التشفير
+            try:
+                original_bytes = decrypt_image(encrypted_bytes, iv)
+            except Exception as e:
+                print(f"Error decrypting {filename}: {str(e)}")
+                continue  # تخطي أي ملف فيه مشكلة
+
+            # تحويل الصورة Base64 لعرضها مباشرة في HTML
+            b64_data = base64.b64encode(original_bytes).decode('utf-8')
+
+            photo_files.append({
+                    'filename': filename.replace('.enc', ''),
+                    'data': b64_data
+            })
+
+    return render_template('gallery.html', photos=photo_files)
 
 
 @app.route('/reset_password/<token>', methods=['GET', 'POST'])
