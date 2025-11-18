@@ -20,7 +20,7 @@
   <label class="form-label fw-semibold">Password</label>
   <input type="password" class="form-control" name="password" placeholder="Enter your password" required>
   <div class="text-end mt-1">
-<a href="{{ url_for('reset_password', token='testtoken') }}" class="small" style="color:#b8936c;">Forgot Password?</a>
+<a href="{{ url_for('forgot_password') }}" class="small" style="color:#b8936c;">Forgot Password?</a>
   </div>
 </div>
 
@@ -36,3 +36,4 @@
   </div>
 </div>
 {% endblock %}
+
