@@ -165,8 +165,15 @@ def delete_photo(filename):
     try:
         file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
 
-        if os.path.exists(file_path):
-            os.remove(file_path)
+        if os.path.exists(enc_file):
+            os.remove(enc_file)
+            deleted = True
+
+        if os.path.exists(iv_file):
+            os.remove(iv_file)
+            deleted = True
+
+        if deleted:
             flash(f'🗑️ "{filename}" has been deleted successfully!', 'success')
         else:
             flash(f'⚠️ File "{filename}" not found.', 'danger')
