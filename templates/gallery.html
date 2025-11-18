@@ -27,29 +27,29 @@
 
 <div class="row justify-content-center">
   {% if photos %}
-    {% for filename in photos %}
-      <div class="col-sm-6 col-md-4 mb-4">
-        <div class="card shadow-sm h-100 border-0" style="border-radius: 0;">
-          <img src="{{ url_for('static', filename='uploads/' + filename) }}"
-               class="card-img-top"
-               alt="{{ filename }}"
-               style="height:200px; object-fit:cover; border-radius: 0;">
-          <div class="card-body d-flex flex-column justify-content-between">
-            <p class="card-text text-truncate text-center">{{ filename }}</p>
-            <div class="d-flex justify-content-around mt-2">
-              <a href="{{ url_for('static', filename='uploads/' + filename) }}"
-                 class="btn btn-sm btn-primary" target="_blank">View</a>
-              <a href="{{ url_for('static', filename='uploads/' + filename) }}"
-                 download class="btn btn-sm btn-success">Download</a>
-              <a href="#" class="btn btn-sm btn-danger"
-                 onclick="confirmDelete('{{ url_for('delete_photo', filename=filename) }}')">
-                <i class="bi bi-trash"></i> Delete
-              </a>
-            </div>
-          </div>
+    {% for photo in photos %}
+  <div class="col-sm-6 col-md-4 mb-4">
+    <div class="card shadow-sm h-100 border-0" style="border-radius: 0;">
+      <img src="data:image/jpeg;base64,{{ photo.data }}"
+           class="card-img-top"
+           alt="{{ photo.filename }}"
+           style="height:200px; object-fit:cover; border-radius: 0;">
+      <div class="card-body d-flex flex-column justify-content-between">
+        <p class="card-text text-truncate text-center">{{ photo.filename }}</p>
+        <div class="d-flex justify-content-around mt-2">
+          <a href="data:image/jpeg;base64,{{ photo.data }}"
+             class="btn btn-sm btn-primary" target="_blank">View</a>
+          <a href="data:image/jpeg;base64,{{ photo.data }}"
+             download class="btn btn-sm btn-success">Download</a>
+          <a href="#" class="btn btn-sm btn-danger"
+             onclick="confirmDelete('{{ url_for('delete_photo', filename=photo.filename) }}')">
+            <i class="bi bi-trash"></i> Delete
+          </a>
         </div>
       </div>
-    {% endfor %}
+    </div>
+  </div>
+{% endfor %}
   {% else %}
     <div class="col-12 text-center">
       <div class="card border-0 shadow-sm p-4">
