@@ -163,7 +163,11 @@ def reset_password(token):
 @app.route('/delete/<filename>')
 def delete_photo(filename):
     try:
-        file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        # أسماء الملفات المشفرة وملفات iv
+        enc_file = os.path.join(app.config['UPLOAD_FOLDER'], filename + ".enc")
+        iv_file = os.path.join(app.config['UPLOAD_FOLDER'], filename + ".iv")
+
+        deleted = False
 
         if os.path.exists(enc_file):
             os.remove(enc_file)
