@@ -83,8 +83,22 @@ def upload():
         if file.filename == '':
             return 'file without name'
         if file:
-            path = os.path.join(app.config['UPLOAD_FOLDER'], file.filename)
-            file.save(path)
+            # قراءة محتوى الصورة بالبايتات
+            image_bytes = file.read()
+
+            # تشفير الصورة
+            encrypted = encrypt_image(image_bytes)
+
+            # حفظ الصورة المشفرة في ملف
+            path = os.path.join(app.config['UPLOAD_FOLDER'], file.filename + ".enc")
+            with open(path, 'wb') as f:
+                f.write(encrypted['ciphertext'])
+
+            # حفظ iv (في قاعدة البيانات أو في ملف منفصل)
+            iv_path = os.path.join(app.config['UPLOAD_FOLDER'], file.filename + ".iv")
+            with open(iv_path, 'wb') as f:
+                f.write(encrypted['iv'])
+
             return redirect(url_for('gallery'))
     return render_template('upload.html')
 
