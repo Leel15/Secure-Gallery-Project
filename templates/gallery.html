@@ -41,10 +41,10 @@
              class="btn btn-sm btn-primary" target="_blank">View</a>
           <a href="data:image/jpeg;base64,{{ photo.data }}"
              download class="btn btn-sm btn-success">Download</a>
-          <a href="#" class="btn btn-sm btn-danger"
-             onclick="confirmDelete('{{ url_for('delete_photo', filename=photo.filename) }}')">
-            <i class="bi bi-trash"></i> Delete
-          </a>
+      <a href="#" class="btn btn-sm btn-danger"
+   onclick="confirmDelete('{{ url_for('delete_photo', enc_path=photo.enc_path) }}')">
+    <i class="bi bi-trash"></i> Delete
+</a>
         </div>
       </div>
     </div>
