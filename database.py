@@ -1,7 +1,3 @@
-# ===============================================
-# database.py
-# ===============================================
-
 import os
 import sqlite3
 import bcrypt
@@ -10,12 +6,12 @@ import datetime
 
 DB_FILE = "users_new.db"
 
-# دالة مساعدة لفتح الاتصال بقاعدة البيانات
+
 def get_db_connection():
     return sqlite3.connect(DB_FILE)
 
+
 def init_db():
-    # التحقق من سلامة قاعدة البيانات
     if os.path.exists(DB_FILE):
         try:
             conn = get_db_connection()
@@ -27,19 +23,16 @@ def init_db():
     conn = get_db_connection()
     cursor = conn.cursor()
 
-    # 1. جدول المستخدمين (مع دمج عمود salt لتوليد مفتاح التشفير)
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             username TEXT UNIQUE NOT NULL,
             email TEXT,
             password_hash TEXT NOT NULL,
-            # salt_for_key_derivation يتم استخدامه في PBKDF2
-            salt_for_key_derivation BLOB 
+            salt_for_key_derivation BLOB
         )
     ''')
 
-    # 2. جدول إعادة تعيين كلمة المرور
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS password_resets (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -48,8 +41,7 @@ def init_db():
             expires_at TEXT NOT NULL
         )
     ''')
-    
-    # 3. جدول الصور (Metadata)
+
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS photos (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -68,9 +60,9 @@ def init_db():
 def register_user(username, email, password):
     conn = get_db_connection()
     cursor = conn.cursor()
-    
+
     # نولد salt جديد لتجزئة كلمة المرور ولعملية اشتقاق المفتاح
-    salt_key = os.urandom(16) 
+    salt_key = os.urandom(16)
     hashed = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
 
     try:
@@ -95,6 +87,7 @@ def get_user_data(username):
     conn.close()
     return result
 
+
 def verify_user(username, password):
     """التحقق من المستخدم (لا يتم استخدامه لتوليد المفتاح مباشرة)."""
     result = get_user_data(username)
@@ -103,10 +96,9 @@ def verify_user(username, password):
         return True
     return False
 
-# ----------------- دوال إدارة الصور المضافة -----------------
+
 
 def save_photo_metadata(username, original_filename, enc_path, iv_path):
-    """حفظ بيانات الصورة المشفرة في قاعدة البيانات."""
     conn = get_db_connection()
     cursor = conn.cursor()
     try:
@@ -121,8 +113,8 @@ def save_photo_metadata(username, original_filename, enc_path, iv_path):
     finally:
         conn.close()
 
+
 def get_user_photos(username):
-    """جلب بيانات الصور (Metadata) الخاصة بمستخدم معين."""
     conn = get_db_connection()
     cursor = conn.cursor()
     cursor.execute(
@@ -133,11 +125,11 @@ def get_user_photos(username):
     conn.close()
     return photos
 
+
 def delete_photo_metadata(username, enc_path):
-    """حذف سجل الصورة من قاعدة البيانات."""
     conn = get_db_connection()
     cursor = conn.cursor()
-    
+
     cursor.execute(
         "DELETE FROM photos WHERE username = ? AND enc_path = ?",
         (username, enc_path)
@@ -147,12 +139,8 @@ def delete_photo_metadata(username, enc_path):
     conn.close()
     return rows_deleted > 0
 
-# ----------------- نهاية دوال إدارة الصور -----------------
-
-# (باقي دوال إعادة تعيين كلمة المرور كما هي)
 
 def create_reset_token(username):
-    # ... الكود كما هو
     conn = get_db_connection()
     cursor = conn.cursor()
     cursor.execute("SELECT id FROM users WHERE username=?", (username,))
@@ -171,7 +159,6 @@ def create_reset_token(username):
 
 
 def verify_reset_token(token):
-    # ... الكود كما هو
     conn = get_db_connection()
     cursor = conn.cursor()
     cursor.execute("SELECT username, expires_at FROM password_resets WHERE token=?", (token,))
@@ -187,21 +174,21 @@ def verify_reset_token(token):
     return None
 
 
-def reset_password(token, new_password):
-    # ... الكود كما هو
+def reset_user_password(token, new_password):
     username = verify_reset_token(token)
     if not username:
         return False
 
     conn = get_db_connection()
     cursor = conn.cursor()
-    
-    # نولد salt جديد للمفتاح عند إعادة التعيين
+
     salt_key = os.urandom(16)
     hashed = bcrypt.hashpw(new_password.encode('utf-8'), bcrypt.gensalt())
 
-    cursor.execute("UPDATE users SET password_hash=?, salt_for_key_derivation=? WHERE username=?", (hashed, salt_key, username))
+    cursor.execute("UPDATE users SET password_hash=?, salt_for_key_derivation=? WHERE username=?",
+                   (hashed, salt_key, username))
     cursor.execute("DELETE FROM password_resets WHERE token=?", (token,))
     conn.commit()
     conn.close()
     return True
+
