@@ -4,7 +4,6 @@
 {% block content %}
 <h4 class="mb-3 text-center">Photo Gallery</h4>
 
-{# SweetAlert flash messages after delete or other actions #}
 {% with messages = get_flashed_messages(with_categories=true) %}
   {% if messages %}
     <script>
@@ -15,8 +14,8 @@
             title: "{{ message }}",
             showConfirmButton: false,
             timer: 1800,
-            background: '#fdf9f3',  // light beige background
-            color: '#333',           // text color
+            background: '#fdf9f3',
+            color: '#333',
             timerProgressBar: true
           });
         {% endfor %}
@@ -28,35 +27,26 @@
 <div class="row justify-content-center">
   {% if photos %}
     {% for photo in photos %}
-  <div class="col-sm-6 col-md-4 mb-4">
-    <div class="card shadow-sm h-100 border-0" style="border-radius: 0;">
-      <img src="data:image/jpeg;base64,{{ photo.data }}"
-           class="card-img-top"
-           alt="{{ photo.filename }}"
-           style="height:200px; object-fit:cover; border-radius: 0;">
-      <div class="card-body d-flex flex-column justify-content-between">
-        <p class="card-text text-truncate text-center">{{ photo.filename }}</p>
-        <div class="d-flex justify-content-around mt-2">
-          <a href="data:image/jpeg;base64,{{ photo.data }}"
-             class="btn btn-sm btn-primary" target="_blank">View</a>
-          <a href="data:image/jpeg;base64,{{ photo.data }}"
-             download class="btn btn-sm btn-success">Download</a>
-      <a href="#" class="btn btn-sm btn-danger"
-   onclick="confirmDelete('{{ url_for('delete_photo', enc_path=photo.enc_path) }}')">
-    <i class="bi bi-trash"></i> Delete
-</a>
+      <div class="col-sm-6 col-md-4 mb-4">
+        <div class="card shadow-sm h-100 border-0">
+          <img src="{{ photo.image_url }}" class="card-img-top" alt="Image" style="height:200px; object-fit:cover; border-radius: 0;">
+          <div class="card-body d-flex flex-column justify-content-between">
+            <p class="card-text text-truncate text-center">{{ photo.filename }}</p>
+            <div class="d-flex justify-content-around mt-2">
+              <a href="{{ photo.image_url }}" class="btn btn-sm btn-primary" target="_blank">View</a>
+              <a href="{{ photo.image_url }}" download class="btn btn-sm btn-success">Download</a>
+              <a href="#" class="btn btn-sm btn-danger" onclick="confirmDelete('{{ url_for('delete_photo', enc_path=photo.enc_path) }}')">
+                <i class="bi bi-trash"></i> Delete
+              </a>
+            </div>
+          </div>
         </div>
       </div>
-    </div>
-  </div>
-{% endfor %}
+    {% endfor %}
   {% else %}
     <div class="col-12 text-center">
       <div class="card border-0 shadow-sm p-4">
-        <img src="{{ url_for('static', filename='images/empty_gallery.png') }}"
-             alt="No Photos"
-             class="img-fluid my-4 mx-auto d-block"
-             style="height:80px; width:85px;">
+        <img src="{{ url_for('static', filename='images/empty_gallery.png') }}" alt="No Photos" class="img-fluid my-4 mx-auto d-block" style="height:80px; width:85px;">
         <h5 class="mb-2 text-muted">No photos uploaded yet.</h5>
         <p class="text-secondary mb-4">Start your secure photo collection now!</p>
         <a href="{{ url_for('upload') }}" class="btn btn-primary btn-lg">
