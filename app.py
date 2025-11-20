@@ -129,7 +129,6 @@ def gallery():
     aes_key = get_aes_key_from_db(username)
 
     photos = []
-
     photo_metadata = get_user_photos(username)
 
     for original_name, enc_path, iv_path in photo_metadata:
@@ -141,7 +140,9 @@ def gallery():
 
             plaintext = decrypt_image(ciphertext, iv, aes_key)
 
-            image_filename = f"decrypted_{original_name}"
+            unique_id = str(uuid.uuid4())
+            image_filename = f"decrypted_{unique_id}_{original_name}"
+
             decrypted_image_path = os.path.join(app.config['UPLOAD_FOLDER'], image_filename)
 
             with open(decrypted_image_path, 'wb') as f:
