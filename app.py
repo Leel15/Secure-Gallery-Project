@@ -1,11 +1,16 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, session
-from database import init_db, register_user, verify_user, create_reset_token, reset_user_password, get_user_data, save_photo_metadata, get_user_photos, delete_photo_metadata
+from database import *
 from encryption import encrypt_image, decrypt_image, derive_key
 import base64
 import os
 import uuid
+from datetime import timedelta
+
 
 app = Flask(__name__)
+app.config['SESSION_PERMANENT'] = True
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=30)
+
 app.secret_key = "secret-key-change-this-in-production"
 UPLOAD_FOLDER = 'static/uploads'
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
@@ -36,8 +41,10 @@ def login():
             session['user_id'] = username
             session['aes_key'] = base64.b64encode(key).decode('utf-8')
 
+            store_aes_key_in_db(username, key)
             flash("Login successful!", "success")
             return redirect(url_for('home'))
+
         else:
             flash("Invalid username or password.", "danger")
     return render_template('login.html')
@@ -91,7 +98,6 @@ def upload():
         key_b64 = session['aes_key']
         aes_key = base64.b64decode(key_b64)  # المفتاح المشتق
 
-        # توليد اسم ملف فريد
         file_id = str(uuid.uuid4())
         safe_name = f"{username}_{file_id}"
         enc_path = os.path.join(app.config['UPLOAD_FOLDER'], safe_name + ".enc")
@@ -120,8 +126,8 @@ def gallery():
         return redirect(url_for('login'))
 
     username = session['user_id']
-    key_b64 = session['aes_key']
-    aes_key = base64.b64decode(key_b64)
+    aes_key = get_aes_key_from_db(username)
+
     photos = []
 
     photo_metadata = get_user_photos(username)
@@ -135,12 +141,18 @@ def gallery():
 
             plaintext = decrypt_image(ciphertext, iv, aes_key)
 
-            b64 = base64.b64encode(plaintext).decode('utf-8')
+            image_filename = f"decrypted_{original_name}"
+            decrypted_image_path = os.path.join(app.config['UPLOAD_FOLDER'], image_filename)
+
+            with open(decrypted_image_path, 'wb') as f:
+                f.write(plaintext)
+
             photos.append({
                 'filename': original_name,
-                'data': b64,
+                'image_url': url_for('static', filename=f'uploads/{image_filename}'),
                 'enc_path': enc_path
             })
+
         except Exception as e:
             flash(f"Error decrypting {original_name}. Data might be corrupt.", "warning")
             continue
