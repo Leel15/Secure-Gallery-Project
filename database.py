@@ -1,3 +1,4 @@
+import base64
 import os
 import sqlite3
 import bcrypt
@@ -61,7 +62,6 @@ def register_user(username, email, password):
     conn = get_db_connection()
     cursor = conn.cursor()
 
-    # نولد salt جديد لتجزئة كلمة المرور ولعملية اشتقاق المفتاح
     salt_key = os.urandom(16)
     hashed = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
 
@@ -79,7 +79,6 @@ def register_user(username, email, password):
 
 
 def get_user_data(username):
-    """جلب بيانات المستخدم بما في ذلك hash و salt."""
     conn = get_db_connection()
     cursor = conn.cursor()
     cursor.execute("SELECT password_hash, salt_for_key_derivation FROM users WHERE username=?", (username,))
@@ -89,7 +88,6 @@ def get_user_data(username):
 
 
 def verify_user(username, password):
-    """التحقق من المستخدم (لا يتم استخدامه لتوليد المفتاح مباشرة)."""
     result = get_user_data(username)
 
     if result and bcrypt.checkpw(password.encode('utf-8'), result[0]):
@@ -149,8 +147,8 @@ def create_reset_token(username):
         return None
 
     token = str(uuid.uuid4())
-    expires_at = (datetime.datetime.utcnow() + datetime.timedelta(hours=1)).isoformat()
 
+    expires_at = (datetime.datetime.utcnow() + datetime.timedelta(hours=1)).isoformat()
     cursor.execute("INSERT INTO password_resets (username, token, expires_at) VALUES (?, ?, ?)",
                    (username, token, expires_at))
     conn.commit()
@@ -158,20 +156,19 @@ def create_reset_token(username):
     return token
 
 
+
 def verify_reset_token(token):
     conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute("SELECT username, expires_at FROM password_resets WHERE token=?", (token,))
+    cursor.execute("SELECT username FROM password_resets WHERE token=?", (token,))
     row = cursor.fetchone()
     conn.close()
 
     if not row:
         return None
 
-    username, expires_at = row
-    if datetime.datetime.utcnow() <= datetime.datetime.fromisoformat(expires_at):
-        return username
-    return None
+    username = row[0]
+    return username
 
 
 def reset_user_password(token, new_password):
@@ -187,8 +184,30 @@ def reset_user_password(token, new_password):
 
     cursor.execute("UPDATE users SET password_hash=?, salt_for_key_derivation=? WHERE username=?",
                    (hashed, salt_key, username))
+
     cursor.execute("DELETE FROM password_resets WHERE token=?", (token,))
+
     conn.commit()
     conn.close()
     return True
+
+def store_aes_key_in_db(username, aes_key):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        "UPDATE users SET aes_key=? WHERE username=?",
+        (base64.b64encode(aes_key), username)
+    )
+    conn.commit()
+    conn.close()
+
+def get_aes_key_from_db(username):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT aes_key FROM users WHERE username=?", (username,))
+    aes_key_b64 = cursor.fetchone()[0]
+    conn.close()
+    return base64.b64decode(aes_key_b64)
+
+
 
