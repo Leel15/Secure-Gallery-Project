@@ -1,58 +1,94 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, session
+from flask_session import Session
 from database import *
 from encryption import encrypt_image, decrypt_image, derive_key
 import base64
 import os
 import uuid
 from datetime import timedelta
+
 app = Flask(__name__)
+
+# ======== Server-Side Session settings (SECURE) ========
+app.config['SESSION_TYPE'] = 'filesystem'
+app.config['SESSION_FILE_DIR'] = './flask_session/'
 app.config['SESSION_PERMANENT'] = True
-app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=30)
-app.secret_key = "secret-key-change-this-in-production"
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=7)
+app.config['SESSION_USE_SIGNER'] = True
+
+app.secret_key = os.urandom(32)
+
+Session(app)
+
+# ======== File Upload Folder ========
 UPLOAD_FOLDER = 'static/uploads'
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+os.makedirs('./flask_session', exist_ok=True)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
+# ======== Initialize Database ========
 init_db()
+
+
+# ======================= HOME ===========================
 @app.route('/home')
 def home():
     if not session.get('user_id'):
         flash("You must login first!", "warning")
         return redirect(url_for('login'))
     return render_template('home.html')
+
+
+# ======================= LOGIN ==========================
 @app.route('/')
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
+
         username = request.form['username']
         password = request.form['password']
+
         if verify_user(username, password):
+
             user_data = get_user_data(username)
             salt = user_data[1]
             key = derive_key(password, salt)
+
+            # Clean old session for security
+            session.clear()
             session['user_id'] = username
             session['aes_key'] = base64.b64encode(key).decode('utf-8')
-            store_aes_key_in_db(username, key)
+
             flash("Login successful!", "success")
             return redirect(url_for('home'))
+
         else:
             flash("Invalid username or password.", "danger")
+
     return render_template('login.html')
+
+
+# ======================= LOGOUT =========================
 @app.route('/logout')
 def logout():
-    session.pop('user_id', None)
-    session.pop('aes_key', None)
+    session.clear()
     flash("Logged out successfully!", "info")
     return redirect(url_for('login'))
+
+
+# ======================= REGISTER =======================
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     message = None
     success = False
+
     if request.method == 'POST':
         username = request.form['username']
         email = request.form['email']
         password = request.form['password']
-        confirm_password = request.form['confirm_password']
-        if password != confirm_password:
+        confirm = request.form['confirm_password']
+
+        if password != confirm:
             message = "Passwords do not match!"
         else:
             if register_user(username, email, password):
@@ -60,89 +96,128 @@ def register():
                 success = True
             else:
                 message = "Username already exists!"
+
     return render_template('register.html', message=message, success=success)
+
+
+# ======================= UPLOAD =========================
 @app.route('/upload', methods=['GET', 'POST'])
 def upload():
     if not session.get('user_id') or not session.get('aes_key'):
-        flash("Please log in again.", "warning")
+        flash("Session expired. Please log in again.", "warning")
         return redirect(url_for('login'))
+
     if request.method == 'POST':
+
         if 'photo' not in request.files:
-            flash("No file selected", "danger")
+            flash("No file selected.", "danger")
             return redirect(request.url)
+
         file = request.files['photo']
         if file.filename == '':
-            flash("No file selected", "danger")
+            flash("No file selected.", "danger")
             return redirect(request.url)
+
         username = session['user_id']
-        key_b64 = session['aes_key']
-        aes_key = base64.b64decode(key_b64) # المفتاح المشتق
+        aes_key = base64.b64decode(session['aes_key'])
+
         file_id = str(uuid.uuid4())
         safe_name = f"{username}_{file_id}"
-        enc_path = os.path.join(app.config['UPLOAD_FOLDER'], safe_name + ".enc")
-        iv_path = os.path.join(app.config['UPLOAD_FOLDER'], safe_name + ".iv")
+
+        enc_path = os.path.join(UPLOAD_FOLDER, safe_name + ".enc")
+        iv_path = os.path.join(UPLOAD_FOLDER, safe_name + ".iv")
+
         image_bytes = file.read()
         encrypted = encrypt_image(image_bytes, aes_key)
+
         with open(enc_path, 'wb') as f:
             f.write(encrypted['ciphertext'])
+
         with open(iv_path, 'wb') as f:
             f.write(encrypted['iv'])
+
         save_photo_metadata(username, file.filename, enc_path, iv_path)
+
         flash(f"Photo '{file.filename}' uploaded and encrypted!", "success")
         return redirect(url_for('gallery'))
+
     return render_template('upload.html')
+
+
+# ======================= GALLERY ========================
 @app.route('/gallery')
 def gallery():
     if not session.get('user_id') or not session.get('aes_key'):
-        flash("Please log in again.", "warning")
+        flash("Session expired. Please log in again.", "warning")
         return redirect(url_for('login'))
+
     username = session['user_id']
-    aes_key = get_aes_key_from_db(username)
+    aes_key = base64.b64decode(session['aes_key'])
+
     photos = []
     photo_metadata = get_user_photos(username)
+
     for original_name, enc_path, iv_path in photo_metadata:
         try:
             with open(enc_path, 'rb') as f:
                 ciphertext = f.read()
+
             with open(iv_path, 'rb') as f:
                 iv = f.read()
+
             plaintext = decrypt_image(ciphertext, iv, aes_key)
+
             unique_id = str(uuid.uuid4())
-            image_filename = f"decrypted_{unique_id}_{original_name}"
-            decrypted_image_path = os.path.join(app.config['UPLOAD_FOLDER'], image_filename)
-            with open(decrypted_image_path, 'wb') as f:
+            image_filename = f"dec_{username}_{unique_id}.jpg"
+            decrypted_path = os.path.join(UPLOAD_FOLDER, image_filename)
+
+            with open(decrypted_path, 'wb') as f:
                 f.write(plaintext)
+
             photos.append({
                 'filename': original_name,
                 'image_url': url_for('static', filename=f'uploads/{image_filename}'),
                 'enc_path': enc_path
             })
-        except Exception as e:
-            flash(f"Error decrypting {original_name}. Data might be corrupt.", "warning")
-            continue
+
+        except Exception:
+            flash("Failed to decrypt some photos.", "warning")
+
     return render_template('gallery.html', photos=photos)
+
+
+# ======================= DELETE PHOTO ===================
 @app.route('/delete/<path:enc_path>')
 def delete_photo(enc_path):
     if not session.get('user_id'):
         return redirect(url_for('login'))
+
     username = session['user_id']
+
     if delete_photo_metadata(username, enc_path):
         iv_path = enc_path.replace('.enc', '.iv')
-        if os.path.exists(enc_path):
-            os.remove(enc_path)
-        if os.path.exists(iv_path):
-            os.remove(iv_path)
+
+        for path in [enc_path, iv_path]:
+            if os.path.exists(path):
+                os.remove(path)
+
         flash("Photo deleted successfully!", "success")
     else:
-        flash("Error deleting photo or photo not found for your account.", "danger")
+        flash("Error deleting photo.", "danger")
+
     return redirect(url_for('gallery'))
+
+
+# =================== RESET PASSWORD =====================
 @app.route('/reset_password/<token>', methods=['GET', 'POST'])
 def reset_password(token):
     message = None
     success = False
+
     if request.method == 'POST':
         password = request.form['password']
         confirm = request.form['confirm_password']
+
         if password != confirm:
             message = "Passwords do not match!"
         else:
@@ -151,16 +226,25 @@ def reset_password(token):
                 success = True
             else:
                 message = "Invalid or expired token."
+
     return render_template('reset_password.html', token=token, message=message, success=success)
+
+
+# =================== FORGOT PASSWORD ====================
 @app.route("/forgot_password", methods=["GET", "POST"])
 def forgot_password():
     if request.method == "POST":
         username = request.form["username"]
         token = create_reset_token(username)
+
         if token:
             return redirect(url_for("reset_password", token=token))
         else:
             flash("Username not found.", "danger")
+
     return render_template("forgot_password.html")
+
+
+# =================== RUN APP ============================
 if __name__ == '__main__':
     app.run(debug=True)
